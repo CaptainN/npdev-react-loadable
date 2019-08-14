@@ -5,13 +5,13 @@
 ## Install
 
 ```sh
-yarn add react-loadable
+meteor add npdev:react-loadable
 ```
 
 ## Example
 
 ```js
-import Loadable from 'react-loadable';
+import { Loadable } from 'meteor/npdev:react-loadable';
 import Loading from './my-loading-component';
 
 const LoadableComponent = Loadable({
@@ -29,24 +29,53 @@ export default class App extends React.Component {
 ## Happy Customers:
 
 - ["I'm obsessed with this right now: CRA with React Router v4 and react-loadable. Free code splitting, this is so easy."](https://twitter.com/matzatorski/status/872059865350406144)
-- ["Webpack 2 upgrade & react-loadable; initial load from 1.1mb to 529kb in under 2 hours. Immense."](https://twitter.com/jwbradley87/status/847191118269833216)
 - ["Oh hey - using loadable component I knocked 13K off my initial load. Easy win!"](https://twitter.com/AdamRackis/status/846593080992153600)
 - ["Had a look and its awesome. shaved like 50kb off our main bundle."](https://github.com/quran/quran.com-frontend/pull/701#issuecomment-287908551)
 - ["I've got that server-side rendering + code splitting + PWA ServiceWorker caching setup done 😎 (thanks to react-loadable). Now our frontend is super fast."](https://twitter.com/mxstbr/status/922375575217627136)
 - ["Using react-loadable went from 221.28 KB → 115.76 KB @ main bundle. Fucking awesome and very simple API."](https://twitter.com/evgenyrodionov/status/958821614644269057)
+- ["We've reduced our entry chunk by a lot & reduced initial load time by ~50%!"](https://github.com/jamiebuilds/react-loadable/pull/181)
+- ["React-loadable is killer! We've decreased our load size by over 50kb with only 2 files! Can't wait to see how much lower it will go."](https://github.com/jamiebuilds/react-loadable/pull/180/)
 
 ## Users
 
+- [AdHawk / Flooring Stores](https://www.flooringstores.com)
+- [Akutbolig.dk](https://www.akutbolig.dk)
+- [Analog.Cafe](https://www.analog.cafe)
+- [Ambrosus](https://ambrosus.com)
+- [Appbase.io](https://github.com/appbaseio/reactivesearch)
 - [Atlassian](https://www.atlassian.com/)
+- [BBC News](https://github.com/BBC-News/simorgh)
+- [Blytzpay](https://www.blytzpay.com)
+- [ClearTax](https://cleartax.in)
 - [Cloudflare](https://www.cloudflare.com)
+- [Chibaki](https://chibaki.co)
 - [Curio](https://www.curio.org)
+- [Delivery.com](https://www.delivery.com)
+- [Doctor.com](https://www.doctor.com/)
+- [Dollar Shave Club](https://github.com/dollarshaveclub)
+- [Dresez](https://dresez.pk/)
+- [Evidation Health](https://evidation.com/)
 - [Flyhomes](https://flyhomes.com)
+- [Gogo](https://gogoair.com)
+- [Gofore](https://gofore.com/en/home/)
+- [Graana](https://www.graana.com/)
+- [Localie](https://localie.co/en)
 - [MediaTek MCS-Lite](https://github.com/MCS-Lite)
+- [NiYO Solutions Inc.](https://www.goniyo.com/)
+- [NP Dev](https://www.npdev.io/)
+- [Officepulse](https://www.officepulse.in/)
+- [Perx](https://www.perxtech.com/)
+- [Pixstori](https://www.pixstoriplus.com/)
+- [Plottu](https://public.plottu.com)
+- [Render](https://render.com)
+- [Shift](https://shift.com)
 - [Snipit](https://snipit.io)
 - [Spectrum.chat](https://spectrum.chat)
 - [Talentpair](https://talentpair.com)
 - [Tinder](https://tinder.com/)
 - [Unsplash](https://unsplash.com/)
+- [Wave](https://waveapps.com/)
+- [WUZZUF](https://wuzzuf.net/)
 
 > _If your company or project is using React Loadable, please open a PR and add
 > yourself to this list (in alphabetical order please)_
@@ -149,7 +178,7 @@ class MyComponent extends React.Component {
 
   componentWillMount() {
     import('./components/Bar').then(Bar => {
-      this.setState({ Bar });
+      this.setState({ Bar: Bar.default });
     });
   }
 
@@ -220,7 +249,7 @@ couple different props.
 
 When your [`loader`](optsloader) fails, your [loading component](#loadingcomponent)
 will receive an [`error`](propserror) prop which will be an `Error` object (otherwise it
-will be `false`).
+will be `null`).
 
 ```js
 function Loading(props) {
@@ -592,6 +621,8 @@ export default {
 }
 ```
 
+_Notice: As of Webpack 4 the CommonsChunkPlugin has been removed and the manifest doesn't need to be extracted anymore._
+
 ```js
 let bundles = getBundles(stats, modules);
 
@@ -604,6 +635,9 @@ res.send(`
       <script src="/dist/manifest.js"></script>
       ${bundles.map(bundle => {
         return `<script src="/dist/${bundle.file}"></script>`
+        // alternatively if you are using publicPath option in webpack config
+        // you can use the publicPath value from bundle, e.g:
+        // return `<script src="${bundle.publicPath}"></script>`
       }).join('\n')}
       <script src="/dist/main.js"></script>
     </body>
@@ -854,7 +888,7 @@ function LoadingComponent(props) {
   }
 }
 
-Loading({
+Loadable({
   loading: LoadingComponent,
 });
 ```
@@ -863,8 +897,9 @@ Loading({
 
 #### `props.error`
 
-A boolean prop passed to [`LoadingComponent`](#loadingcomponent) when the
-[`loader`](#optsloader) has failed.
+An `Error` object passed to [`LoadingComponent`](#loadingcomponent) when the
+[`loader`](#optsloader) has failed. When there is no error, `null` is
+passed.
 
 ```js
 function LoadingComponent(props) {
@@ -1054,7 +1089,7 @@ const LoadableComponents = Loadable.Map({
 ## Webpack Plugin
 
 In order to [send the right bundles down](#mapping-loaded-modules-to-bundles)
-when rendering server-side, you'll need the React Loadable Webpack plugin 
+when rendering server-side, you'll need the React Loadable Webpack plugin
 to provide you with a mapping of modules to bundles.
 
 ```js
@@ -1111,7 +1146,7 @@ export default function MyLoadable(opts) {
   return Loadable(Object.assign({
     loading: Loading,
     delay: 200,
-    timeout: 10,
+    timeout: 10000,
   }, opts));
 };
 ```
