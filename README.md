@@ -1,6 +1,6 @@
 ![React Loadable](http://thejameskyle.com/img/react-loadable-header.png)
 
-> A higher order component for loading components with dynamic imports.
+> A higher order component for loading components with dynamic imports. This is a WIP direct port from the original `react-loadable` project to Meteor.
 
 ## Install
 
@@ -93,7 +93,7 @@ export default class App extends React.Component {
   <small>Guide</small>
 </h2>
 
-So you've got your React app, you're bundling it with Webpack, and things are
+So you've got your React app, you're bundling it with Meteor, and things are
 going smooth. But then one day you notice your app's bundle is getting so big
 that it's slowing things down.
 
@@ -105,7 +105,7 @@ Code-splitting is the process of taking one large bundle containing your entire
 app, and splitting them up into multiple smaller bundles which contain separate
 parts of your app.
 
-This might seem difficult to do, but tools like Webpack have this built in, and
+This might seem difficult to do, but tools like Meteor have this built in, and
 React Loadable is designed to make it super simple.
 
 ### Route-based splitting vs. Component-based splitting
@@ -217,8 +217,8 @@ class MyComponent extends React.Component {
 
 ### Automatic code-splitting on `import()`
 
-When you use `import()` with Webpack 2+, it will
-[automatically code-split](https://webpack.js.org/guides/code-splitting/) for
+When you use `import()` with Meteor 1.5+, it will
+[automatically code-split](https://blog.meteor.com/dynamic-imports-in-meteor-1-5-c6130419c3cd) for
 you with no additional configuration.
 
 This means that you can easily experiment with new code splitting points just
@@ -501,7 +501,7 @@ component is trying to load: [`opts.modules`](#optsmodules) and
 Loadable({
   loader: () => import('./Bar'),
   modules: ['./Bar'],
-  webpack: () => [require.resolveWeak('./Bar')],
+  webpack: () => [require.resolve('./Bar')],
 });
 ```
 

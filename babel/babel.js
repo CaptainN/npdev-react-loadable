@@ -1,60 +1,63 @@
-export default function({ types: t, template }) {
+'use strict'
+exports.__esModule = true
+exports.default = function ({ types: t }) {
   return {
     visitor: {
-      ImportDeclaration(path) {
-        let source = path.node.source.value;
-        if (source !== 'react-loadable') return;
+      ImportDeclaration (path) {
+        var source = path.node.source.value
+        if (source !== 'meteor/npdev:react-loadable') return
 
-        let defaultSpecifier = path.get('specifiers').find(specifier => {
-          return specifier.isImportDefaultSpecifier();
-        });
+        var specifier = path.get('specifiers').find(specifier => {
+          return (specifier.parent.source.value === 'meteor/npdev:react-loadable' &&
+            specifier.node.local.name === 'Loadable')
+        })
 
-        if (!defaultSpecifier) return;
+        if (!specifier) return
 
-        let bindingName = defaultSpecifier.node.local.name;
-        let binding = path.scope.getBinding(bindingName);
+        var bindingName = specifier.node.local.name
+        var binding = path.scope.getBinding(bindingName)
 
         binding.referencePaths.forEach(refPath => {
-          let callExpression = refPath.parentPath;
+          var callExpression = refPath.parentPath
 
           if (
             callExpression.isMemberExpression() &&
             callExpression.node.computed === false &&
             callExpression.get('property').isIdentifier({ name: 'Map' })
           ) {
-            callExpression = callExpression.parentPath;
+            callExpression = callExpression.parentPath
           }
 
-          if (!callExpression.isCallExpression()) return;
+          if (!callExpression.isCallExpression()) return
 
-          let args = callExpression.get('arguments');
-          if (args.length !== 1) throw callExpression.error;
+          var args = callExpression.get('arguments')
+          if (args.length !== 1) throw callExpression.error
 
-          let options = args[0];
-          if (!options.isObjectExpression()) return;
+          var options = args[0]
+          if (!options.isObjectExpression()) return
 
-          let properties = options.get('properties');
-          let propertiesMap = {};
+          var properties = options.get('properties')
+          var propertiesMap = {}
 
           properties.forEach(property => {
-            let key = property.get('key');
-            propertiesMap[key.node.name] = property;
-          });
+            var key = property.get('key')
+            propertiesMap[key.node.name] = property
+          })
 
           if (propertiesMap.webpack) {
-            return;
+            return
           }
 
-          let loaderMethod = propertiesMap.loader.get('value');
-          let dynamicImports = [];
+          var loaderMethod = propertiesMap.loader.get('value')
+          var dynamicImports = []
 
           loaderMethod.traverse({
-            Import(path) {
-              dynamicImports.push(path.parentPath);
+            Import (path) {
+              dynamicImports.push(path.parentPath)
             }
-          });
+          })
 
-          if (!dynamicImports.length) return;
+          if (!dynamicImports.length) return
 
           propertiesMap.loader.insertAfter(
             t.objectProperty(
@@ -65,29 +68,29 @@ export default function({ types: t, template }) {
                   dynamicImports.map(dynamicImport => {
                     return t.callExpression(
                       t.memberExpression(
-                      	t.identifier('require'),
-                        t.identifier('resolve'),
+                        t.identifier('require'),
+                        t.identifier('resolve')
                       ),
-                      [dynamicImport.get('arguments')[0].node],
+                      [dynamicImport.get('arguments')[0].node]
                     )
                   })
                 )
               )
             )
-          );
+          )
 
           propertiesMap.loader.insertAfter(
             t.objectProperty(
               t.identifier('modules'),
               t.arrayExpression(
                 dynamicImports.map(dynamicImport => {
-                  return dynamicImport.get('arguments')[0].node;
+                  return dynamicImport.get('arguments')[0].node
                 })
               )
             )
-          );
-        });
+          )
+        })
       }
     }
-  };
+  }
 }
