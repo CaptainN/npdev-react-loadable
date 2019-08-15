@@ -55,7 +55,7 @@ export const LoadableCaptureProvider = ({ handle, children }) => {
  * Creates a "Loadable" component at startup, which will persist for the length of the program.
  */
 export const Loadable = (options) => {
-  const { render = resolveRender, loader, webpack, loading } = options
+  const { render = resolveRender, loader, meteor, loading } = options
 
   if (!loading) {
     throw new Error('react-loadable requires a `loading` component')
@@ -78,8 +78,8 @@ export const Loadable = (options) => {
 
     // record the path for use in client loading
     const capture = useContext(LoadableContext)
-    if (capture && typeof webpack === 'function') {
-      capture.loadables.push(webpack().sort().join(','))
+    if (capture && typeof meteor === 'function') {
+      capture.loadables.push(meteor().sort().join(','))
     }
 
     // render

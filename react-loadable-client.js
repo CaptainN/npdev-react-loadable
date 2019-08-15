@@ -2,7 +2,7 @@ import { EJSON } from 'meteor/ejson'
 import React, { useState, useEffect, useRef } from 'react'
 
 const INITIALIZERS = []
-const INITIALIZERS_BY_WEBPACK = {}
+const INITIALIZERS_BY_MODULE = {}
 
 function load (loader) {
   const promise = loader()
@@ -39,7 +39,7 @@ function resolveRender (loaded, props) {
 /**
  * Creates a "Loadable" component at startup, which will persist for the length of the program.
  */
-export const Loadable = ({ render = resolveRender, webpack, loader, loading, delay = 200, timeout = null }) => {
+export const Loadable = ({ render = resolveRender, meteor, loader, loading, delay = 200, timeout = null }) => {
   if (!loading) {
     throw new Error('react-loadable requires a `loading` component')
   }
@@ -55,8 +55,8 @@ export const Loadable = ({ render = resolveRender, webpack, loader, loading, del
 
   // Store all the INITIALIZERS for later use
   INITIALIZERS.push(init)
-  if (typeof webpack === 'function') {
-    INITIALIZERS_BY_WEBPACK[webpack().sort().join(',')] = () => {
+  if (typeof meteor === 'function') {
+    INITIALIZERS_BY_MODULE[meteor().sort().join(',')] = () => {
       return init()
     }
   }
@@ -162,7 +162,7 @@ function flushInitializers (initializers) {
 
 const preload = (preloadables) => {
   const initializers = preloadables.map(preloadable => {
-    return INITIALIZERS_BY_WEBPACK[preloadable]
+    return INITIALIZERS_BY_MODULE[preloadable]
   })
   return flushInitializers(initializers)
 }
