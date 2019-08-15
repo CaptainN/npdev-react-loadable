@@ -1,6 +1,8 @@
 ![React Loadable](http://thejameskyle.com/img/react-loadable-header.png)
 
-> A higher order component for loading components with dynamic imports. This is a WIP direct port from the original `react-loadable` project to Meteor.
+A higher order component for loading components with dynamic imports. This is a direct port from the original `react-loadable` project to Meteor.
+
+Meteor has a few different requirements for making this all work, and some incompatibilities with the original `react-loadable`. This fork addresses those issues, while also streamlining some of the APIs. The examples in this readme have also been updated for Meteor.
 
 ## Install
 
