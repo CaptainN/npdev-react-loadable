@@ -1,6 +1,6 @@
 {
   "name": "npdev-react-loadable-babel",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "The babel plugin for use with `npdev:react-loadable` in Meteor projects.",
   "main": "babel.js",
   "scripts": {
