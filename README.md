@@ -477,21 +477,19 @@ are rendering.
 
 #### Declaring which modules are being loaded
 
-There are two options in [`Loadable`](#loadable) and
-[`Loadable.Map`](#loadablemap) which are used to tell us which modules our
-component is trying to load: [`opts.modules`](#optsmodules) and
-[`opts.webpack`](#optswebpack).
+There is one option in [`Loadable`](#loadable) and
+[`Loadable.Map`](#loadablemap) which is used to tell us which modules our
+component is trying to load: [`opts.meteor`](#optsmeteor).
 
 ```js
 Loadable({
   loader: () => import('./Bar'),
-  modules: ['./Bar'],
-  webpack: () => [require.resolve('./Bar')],
+  meteor: () => [require.resolve('./Bar')]
 });
 ```
 
-But don't worry too much about these options. React Loadable includes a
-[Babel plugin](#babel-plugin) to add them for you.
+But don't worry too much about this option. React Loadable includes a
+[Babel plugin](#babel-plugin) to add it for you.
 
 Install the npdev version of the react-loadable babel plugin from npm:
 
@@ -509,7 +507,7 @@ And add the `npdev-react-loadable-babel` plugin to your Babel config:
 }
 ```
 
-Now these options will automatically be provided.
+Now this option will automatically be provided.
 
 #### Finding out which dynamic modules were rendered
 
@@ -706,28 +704,15 @@ Loadable({
 });
 ```
 
-#### `opts.webpack`
+#### `opts.meteor`
 
-An optional function which returns an array of Webpack module ids which you can
+An optional function which returns an array of meteor module ids which you can
 get with `require.resolve`.
 
 ```js
 Loadable({
   loader: () => import('./Foo'),
-  webpack: () => [require.resolve('./Foo')],
-});
-```
-
-This option can be automated with the [Babel Plugin](#babel-plugin).
-
-#### `opts.modules`
-
-An optional array with module paths for your imports.
-
-```js
-Loadable({
-  loader: () => import('./my-component'),
-  modules: ['./my-component'],
+  meteor: () => [require.resolve('./Foo')],
 });
 ```
 
@@ -935,7 +920,7 @@ preloadLoadables().then(() => onPageLoad(sink => {
 
 ## Babel Plugin
 
-Providing [`opts.webpack`](#optswebpack) and [`opts.modules`](#optsmodules) for
+Providing [`opts.meteor`](#optsmeteor) and [`opts.modules`](#optsmodules) for
 every loadable component is a lot of manual work to remember to do.
 
 Instead you can install the babel plugin from npm, and add the
@@ -976,8 +961,7 @@ import path from 'path';
 
 const LoadableMyComponent = Loadable({
   loader: () => import('./MyComponent'),
-  webpack: () => [require.resolve('./MyComponent')],
-  modules: [path.join(__dirname, './MyComponent')],
+  meteor: () => [require.resolve('./MyComponent')]
 });
 
 const LoadableComponents = Loadable.Map({
@@ -985,8 +969,7 @@ const LoadableComponents = Loadable.Map({
     One: () => import('./One'),
     Two: () => import('./Two'),
   },
-  webpack: () => [require.resolve('./One'), require.resolve('./Two')],
-  modules: [path.join(__dirname, './One'), path.join(__dirname, './Two')],
+  meteor: () => [require.resolve('./One'), require.resolve('./Two')]
 });
 ```
 
@@ -1027,15 +1010,14 @@ export default class App extends React.Component {
 }
 ```
 
-Unfortunately at the moment using wrapped Loadable breaks [react-loadable/babel](#babel-plugin) so in such case you have to add required properties (`modules`, `webpack`) manually.
+Unfortunately at the moment using wrapped Loadable breaks [react-loadable/babel](#babel-plugin) so in such case you have to add required properties (`modules`, `meteor`) manually.
 
 ```js
 import MyLoadable from './MyLoadable';
 
 const LoadableMyComponent = MyLoadable({
   loader: () => import('./MyComponent'),
-  modules: ['./MyComponent'],
-  webpack: () => [require.resolve('./MyComponent')],
+  meteor: () => [require.resolve('./MyComponent')]
 });
 
 export default class App extends React.Component {

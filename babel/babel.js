@@ -44,7 +44,7 @@ exports.default = function ({ types: t }) {
             propertiesMap[key.node.name] = property
           })
 
-          if (propertiesMap.webpack) {
+          if (propertiesMap.meteor) {
             return
           }
 
@@ -61,7 +61,7 @@ exports.default = function ({ types: t }) {
 
           propertiesMap.loader.insertAfter(
             t.objectProperty(
-              t.identifier('webpack'),
+              t.identifier('meteor'),
               t.arrowFunctionExpression(
                 [],
                 t.arrayExpression(
@@ -75,17 +75,6 @@ exports.default = function ({ types: t }) {
                     )
                   })
                 )
-              )
-            )
-          )
-
-          propertiesMap.loader.insertAfter(
-            t.objectProperty(
-              t.identifier('modules'),
-              t.arrayExpression(
-                dynamicImports.map(dynamicImport => {
-                  return dynamicImport.get('arguments')[0].node
-                })
               )
             )
           )
