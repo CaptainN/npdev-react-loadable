@@ -2,7 +2,7 @@
 
 A higher order component for loading components with dynamic imports. This is a direct port from the original `react-loadable` project to Meteor.
 
-Meteor has a few different requirements for making this all work, and some incompatibilities with the original `react-loadable`. This fork addresses those issues, while also streamlining some of the APIs. The examples in this readme have also been updated for Meteor.
+Meteor has a few different requirements for making this all work, and some incompatibilities with the original `react-loadable` when it comes to server side rendering (SSR). This fork addresses those issues, while also streamlining some of the APIs. The examples in this readme have also been updated for Meteor.
 
 ## Install
 
