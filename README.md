@@ -176,7 +176,7 @@ class MyComponent extends React.Component {
     Bar: null
   };
 
-  componentWillMount() {
+  componentDidMount() {
     import('./components/Bar').then(Bar => {
       this.setState({ Bar: Bar.default });
     });
@@ -199,7 +199,7 @@ What about when `import()` fails? What about server-side rendering?
 Instead you can use `Loadable` to abstract away the problem.
 
 ```js
-import Loadable from 'react-loadable';
+import { Loadable}  from 'meteor/npdev:react-loadable';
 
 const LoadableBar = Loadable({
   loader: () => import('./components/Bar'),
@@ -433,32 +433,17 @@ is a whole bunch of loading screens.
 This really sucks, but the good news is that React Loadable is designed to
 make server-side rendering work as if nothing is being loaded dynamically.
 
-Here's our starting server using [Express](https://expressjs.com/).
+Here's our starting server-rendering using [Meteor](https://meteor.com/).
 
 ```js
-import express from 'express';
-import React from 'react';
-import ReactDOMServer from 'react-dom/server';
-import App from './components/App';
+import React from 'react'
+import { renderToString } from 'react-dom/server'
+import { onPageLoad } from 'meteor/server-render'
+import App from '/imports/App'
 
-const app = express();
-
-app.get('/', (req, res) => {
-  res.send(`
-    <!doctype html>
-    <html lang="en">
-      <head>...</head>
-      <body>
-        <div id="app">${ReactDOMServer.renderToString(<App/>)}</div>
-        <script src="/dist/main.js"></script>
-      </body>
-    </html>
-  `);
-});
-
-app.listen(3000, () => {
-  console.log('Running on http://localhost:3000/');
-});
+onPageLoad(sink => {
+  sink.renderIntoElementById('root', renderToString(<App />)
+})
 ```
 
 ### Preloading all your loadable components on the server
@@ -467,15 +452,15 @@ The first step to rendering the correct content from the server is to make sure
 that all of your loadable components are already loaded when you go to render
 them.
 
-To do this, you can use the [`Loadable.preloadAll`](#loadablepreloadall)
+To do this, you can use the [`preloadLoadables`](#preloadloadables)
 method. It returns a promise that will resolve when all your loadable
 components are ready.
 
 ```js
-Loadable.preloadAll().then(() => {
-  app.listen(3000, () => {
-    console.log('Running on http://localhost:3000/');
-  });
+preloadLoadables().then(() => {
+  onPageLoad(sink => {
+    sink.renderIntoElementById('root', renderToString(<App />)
+  })
 });
 ```
 
@@ -508,12 +493,18 @@ Loadable({
 But don't worry too much about these options. React Loadable includes a
 [Babel plugin](#babel-plugin) to add them for you.
 
-Just add the `react-loadable/babel` plugin to your Babel config:
+Install the npdev version of the react-loadable babel plugin from npm:
+
+```
+$ meteor npm i -D npdev-react-loadable-babel
+```
+
+And add the `npdev-react-loadable-babel` plugin to your Babel config:
 
 ```json
 {
   "plugins": [
-    "react-loadable/babel"
+    "npdev-react-loadable-babel"
   ]
 }
 ```
@@ -525,142 +516,46 @@ Now these options will automatically be provided.
 Next we need to find out which modules were actually rendered when a request
 comes in.
 
-For this, there is [`Loadable.Capture`](#loadablecapture) component which can
+For this, there is [`LoadableCaptureProvider`](#loadablecaptureprovider) component which can
 be used to collect all the modules that were rendered.
 
 ```js
-import Loadable from 'react-loadable';
+import { LoadableCaptureProvider, preloadAllLoadables } from 'meteor/npdev:react-loadable'
 
-app.get('/', (req, res) => {
-  let modules = [];
+preloadAllLoadables().then(() => {
+  onPageLoad(sink => {
+    const loadableHandle = {};
 
-  let html = ReactDOMServer.renderToString(
-    <Loadable.Capture report={moduleName => modules.push(moduleName)}>
-      <App/>
-    </Loadable.Capture>
-  );
+    const html = ReactDOMServer.renderToString(
+      <LoadableCaptureProvider report={moduleName => modules.push(moduleName)}>
+        <App/>
+      </LoadableCaptureProvider>
+    );
+    sink.renderIntoElementById('root', renderToString(app))
 
-  console.log(modules);
+    console.log(modules);
 
-  res.send(`...${html}...`);
+    sink.appendToBody(loadableHandle.toScriptTag())
+  })
 });
-```
-
-#### Mapping loaded modules to bundles
-
-In order to make sure that the client loads all the modules that were rendered
-server-side, we'll need to map them to the bundles that Webpack created.
-
-This comes in two parts.
-
-First we need Webpack to tell us which bundles each module lives inside. For
-this there is the [React Loadable Webpack plugin](#webpack-plugin).
-
-Import the `ReactLoadablePlugin` from `react-loadable/webpack` and include it
-in your webpack config. Pass it a `filename` for where to store the JSON data
-about our bundles.
-
-```js
-// webpack.config.js
-import { ReactLoadablePlugin } from 'react-loadable/webpack';
-
-export default {
-  plugins: [
-    new ReactLoadablePlugin({
-      filename: './dist/react-loadable.json',
-    }),
-  ],
-};
-```
-
-Then we'll go back to our server and use this data to convert our modules to
-bundles.
-
-To convert from modules to bundles, import the [`getBundles`](#getbundles)
-method from `react-loadable/webpack` and the data from Webpack.
-
-```js
-import Loadable from 'react-loadable';
-import { getBundles } from 'react-loadable/webpack'
-import stats from './dist/react-loadable.json';
-
-app.get('/', (req, res) => {
-  let modules = [];
-
-  let html = ReactDOMServer.renderToString(
-    <Loadable.Capture report={moduleName => modules.push(moduleName)}>
-      <App/>
-    </Loadable.Capture>
-  );
-
-  let bundles = getBundles(stats, modules);
-
-  // ...
-});
-```
-
-We can then render these bundles into `<script>` tags in our HTML.
-
-It is important that the bundles are included _before_ the main bundle, so that
-they can be loaded by the browser prior to the app rendering.
-
-However, as the Webpack manifest (including the logic for parsing bundles) lives in
-the main bundle, it will need to be extracted into its own chunk.
-
-This is easy to do with the [CommonsChunkPlugin](https://webpack.js.org/plugins/commons-chunk-plugin/)
-
-```js
-// webpack.config.js
-export default {
-  plugins: [
-    new webpack.optimize.CommonsChunkPlugin({
-      name: 'manifest',
-      minChunks: Infinity
-    })
-  ]
-}
-```
-
-_Notice: As of Webpack 4 the CommonsChunkPlugin has been removed and the manifest doesn't need to be extracted anymore._
-
-```js
-let bundles = getBundles(stats, modules);
-
-res.send(`
-  <!doctype html>
-  <html lang="en">
-    <head>...</head>
-    <body>
-      <div id="app">${html}</div>
-      <script src="/dist/manifest.js"></script>
-      ${bundles.map(bundle => {
-        return `<script src="/dist/${bundle.file}"></script>`
-        // alternatively if you are using publicPath option in webpack config
-        // you can use the publicPath value from bundle, e.g:
-        // return `<script src="${bundle.publicPath}"></script>`
-      }).join('\n')}
-      <script src="/dist/main.js"></script>
-    </body>
-  </html>
-`);
 ```
 
 #### Preloading ready loadable components on the client
 
-We can use the [`Loadable.preloadReady()`](#loadablepreloadready) method on the
+We can use the [`preloadLoadables()`](#preloadLoadables) method on the
 client to preload the loadable components that were included on the page.
 
-Like [`Loadable.preloadAll()`](#loadablepreloadall), it returns a promise,
-which on resolution means that we can hydrate our app.
+Like [`preloadAllLoadables()`](#preloadAllLoadables) on the server, it returns
+a promise, which on resolution means that we can hydrate our app.
 
 ```js
 // src/entry.js
 import React from 'react';
 import ReactDOM from 'react-dom';
-import Loadable from 'react-loadable';
+import { preloadLoadables } from 'meteor/npdev:react-loadable'
 import App from './components/App';
 
-Loadable.preloadReady().then(() => {
+preloadLoadables().then(() => {
   ReactDOM.hydrate(<App/>, document.getElementById('app'));
 });
 
@@ -814,12 +709,12 @@ Loadable({
 #### `opts.webpack`
 
 An optional function which returns an array of Webpack module ids which you can
-get with `require.resolveWeak`.
+get with `require.resolve`.
 
 ```js
 Loadable({
   loader: () => import('./Foo'),
-  webpack: () => [require.resolveWeak('./Foo')],
+  webpack: () => [require.resolve('./Foo')],
 });
 ```
 
@@ -947,7 +842,7 @@ function LoadingComponent(props) {
 
 [Read more about delays](#avoiding-flash-of-loading-component).
 
-### `Loadable.preloadAll()`
+### `preloadAllLoadables()`
 
 This will call all of the
 [`LoadableComponent.preload`](#loadablecomponentpreload) methods recursively
@@ -955,10 +850,10 @@ until they are all resolved. Allowing you to preload all of your dynamic
 modules in environments like the server.
 
 ```js
-Loadable.preloadAll().then(() => {
-  app.listen(3000, () => {
-    console.log('Running on http://localhost:3000/');
-  });
+import { preloadAllLoadables } from 'meteor/npdev:react-loadable'
+
+preloadAllLoadables().then(() => onPageLoad(sink => {
+  // do server rendering
 });
 ```
 
@@ -992,41 +887,48 @@ class MyComponent extends React.Component {
 }
 ```
 
-> **Note:** `Loadable.preloadAll()` will not work if you have more than one
+> **Note:** `preloadLoadables()` will not work if you have more than one
 > copy of `react-loadable` in your app.
 
 [Read more about preloading on the server](#preloading-all-your-loadable-components-on-the-server).
 
-### `Loadable.preloadReady()`
+### `preloadLoadables()`
 
-Check for modules that are already loaded in the browser and call the matching
+Check for modules that hav been rendered on the server and call the matching
 [`LoadableComponent.preload`](#loadablecomponentpreload) methods.
 
 ```js
-Loadable.preloadReady().then(() => {
+preloadLoadables().then(() => {
   ReactDOM.hydrate(<App/>, document.getElementById('app'));
 });
 ```
 
 [Read more about preloading on the client](#waiting-to-render-on-the-client-until-all-the-bundles-are-loaded).
 
-### `Loadable.Capture`
+### `LoadableCaptureProvider`
 
-A component for reporting which modules were rendered.
+A component for recording which modules were rendered in SSR.
 
-Accepts a `report` prop which is called for every `moduleName` that is
-rendered via React Loadable.
+Accepts a `handle` prop, and object which is extended with a list of
+resolved module ids, and helpful methods; `toEJON` and `toScriptTag`.
 
 ```js
-let modules = [];
+import { LoadableCaptureProvider, preloadLoadables } from 'meteor/npdev:react-loadable'
 
-let html = ReactDOMServer.renderToString(
-  <Loadable.Capture report={moduleName => modules.push(moduleName)}>
-    <App/>
-  </Loadable.Capture>
-);
+preloadLoadables().then(() => onPageLoad(sink => {
+  const loadableHandle = {};
 
-console.log(modules);
+  const html = ReactDOMServer.renderToString(
+    <LoadableCaptureProvider handle={loadableHandle}>
+      <App/>
+    </LoadableCaptureProvider>
+  );
+  sink.renderIntoElementById('root', html)
+
+  console.log(loadableHandle);
+
+  sink.appendToBody(loadableHandle.toScriptTag());
+}));
 ```
 
 [Read more about capturing rendered modules](#finding-out-which-dynamic-modules-were-rendered).
@@ -1036,12 +938,16 @@ console.log(modules);
 Providing [`opts.webpack`](#optswebpack) and [`opts.modules`](#optsmodules) for
 every loadable component is a lot of manual work to remember to do.
 
-Instead you can add the Babel plugin to your config and it will automate it for
-you:
+Instead you can install the babel plugin from npm, and add the
+Babel plugin to your config and it will automate it for you:
+
+```
+$ meteor npm i -D npdev-react-loadable-babel
+```
 
 ```json
 {
-  "plugins": ["react-loadable/babel"]
+  "plugins": ["npdev-react-loadable-babel"]
 }
 ```
 
@@ -1070,7 +976,7 @@ import path from 'path';
 
 const LoadableMyComponent = Loadable({
   loader: () => import('./MyComponent'),
-  webpack: () => [require.resolveWeak('./MyComponent')],
+  webpack: () => [require.resolve('./MyComponent')],
   modules: [path.join(__dirname, './MyComponent')],
 });
 
@@ -1079,58 +985,12 @@ const LoadableComponents = Loadable.Map({
     One: () => import('./One'),
     Two: () => import('./Two'),
   },
-  webpack: () => [require.resolveWeak('./One'), require.resolveWeak('./Two')],
+  webpack: () => [require.resolve('./One'), require.resolve('./Two')],
   modules: [path.join(__dirname, './One'), path.join(__dirname, './Two')],
 });
 ```
 
 [Read more about declaring modules](#declaring-which-modules-are-being-loaded).
-
-## Webpack Plugin
-
-In order to [send the right bundles down](#mapping-loaded-modules-to-bundles)
-when rendering server-side, you'll need the React Loadable Webpack plugin
-to provide you with a mapping of modules to bundles.
-
-```js
-// webpack.config.js
-import { ReactLoadablePlugin } from 'react-loadable/webpack';
-
-export default {
-  plugins: [
-    new ReactLoadablePlugin({
-      filename: './dist/react-loadable.json',
-    }),
-  ],
-};
-```
-
-This will create a file (`opts.filename`) which you can import to map modules
-to bundles.
-
-[Read more about mapping modules to bundles](#mapping-loaded-modules-to-bundles).
-
-### `getBundles`
-
-A method exported by `react-loadable/webpack` for converting modules to
-bundles.
-
-```js
-import { getBundles } from 'react-loadable/webpack';
-
-let bundles = getBundles(stats, modules);
-```
-
-[Read more about mapping modules to bundles](#mapping-loaded-modules-to-bundles).
-
-<h2>
-  <hr>
-  <hr>
-  <img src="http://thejameskyle.com/img/react-loadable-faq.png" alt="FAQ">
-  <hr>
-  <hr>
-  <small>FAQ</small>
-</h2>
 
 ### How do I avoid repetition?
 
@@ -1175,7 +1035,7 @@ import MyLoadable from './MyLoadable';
 const LoadableMyComponent = MyLoadable({
   loader: () => import('./MyComponent'),
   modules: ['./MyComponent'],
-  webpack: () => [require.resolveWeak('./MyComponent')],
+  webpack: () => [require.resolve('./MyComponent')],
 });
 
 export default class App extends React.Component {
@@ -1183,38 +1043,4 @@ export default class App extends React.Component {
     return <LoadableMyComponent/>;
   }
 }
-```
-
-### How do I handle other styles `.css` or sourcemaps `.map` with server-side rendering?
-
-When you call [`getBundles`](#getbundles), it may return file types other than
-JavaScript depending on your Webpack configuration.
-
-To handle this, you should manually filter down to the file extensions that
-you care about:
-
-```js
-let bundles = getBundles(stats, modules);
-
-let styles = bundles.filter(bundle => bundle.file.endsWith('.css'));
-let scripts = bundles.filter(bundle => bundle.file.endsWith('.js'));
-
-res.send(`
-  <!doctype html>
-  <html lang="en">
-    <head>
-      ...
-      ${styles.map(style => {
-        return `<link href="/dist/${style.file}" rel="stylesheet"/>`
-      }).join('\n')}
-    </head>
-    <body>
-      <div id="app">${html}</div>
-      <script src="/dist/main.js"></script>
-      ${scripts.map(script => {
-        return `<script src="/dist/${script.file}"></script>`
-      }).join('\n')}
-    </body>
-  </html>
-`);
 ```
