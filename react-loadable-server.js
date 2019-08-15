@@ -119,7 +119,7 @@ function flushInitializers (initializers) {
   })
 }
 
-export const preloadLoadables = () => {
+export const preloadAllLoadables = () => {
   return new Promise((resolve, reject) => {
     flushInitializers(INITIALIZERS).then(resolve, reject)
   })
