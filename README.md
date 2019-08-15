@@ -527,7 +527,7 @@ preloadAllLoadables().then(() => {
     const loadableHandle = {};
 
     const html = ReactDOMServer.renderToString(
-      <LoadableCaptureProvider report={moduleName => modules.push(moduleName)}>
+      <LoadableCaptureProvider handle={loadableHandle}>
         <App/>
       </LoadableCaptureProvider>
     );
