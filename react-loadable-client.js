@@ -1,5 +1,5 @@
 import { EJSON } from 'meteor/ejson'
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useReducer } from 'react'
 
 const INITIALIZERS = []
 const INITIALIZERS_BY_MODULE = {}
@@ -36,6 +36,10 @@ function resolveRender (loaded, props) {
   return React.createElement(resolve(loaded), props)
 }
 
+// Used to create a forceUpdate from useReducer. Forces update by
+// incrementing a number whenever the dispatch method is invoked.
+const fur = x => x + 1
+
 /**
  * Creates a "Loadable" component at startup, which will persist for the length of the program.
  */
@@ -44,13 +48,13 @@ export const Loadable = ({ render = resolveRender, meteor, loader, loading, dela
     throw new Error('react-loadable requires a `loading` component')
   }
 
-  // Gets ready to load the module
-  let res = null
+  // Gets ready to load the module, and maintain status
+  let status = null
   function init () {
-    if (!res) {
-      res = load(loader)
+    if (!status) {
+      status = load(loader)
     }
-    return res.promise
+    return status.promise
   }
 
   // Store all the INITIALIZERS for later use
@@ -62,54 +66,61 @@ export const Loadable = ({ render = resolveRender, meteor, loader, loading, dela
   }
 
   function Loadable (props) {
-    if (!res || !res.loaded) init()
-
-    const [pastDelay, setPastDelay] = useState(false)
-    const [timedOut, setTimedOut] = useState(false)
-    const [status, setStatus] = useState({
-      inError: res.error,
-      isLoading: res.loading,
-      loaded: res.loaded
-    })
-    const { current: refs } = useRef({})
-
-    const _clearTimeouts = () => {
-      clearTimeout(refs._delay)
-      clearTimeout(refs._timeout)
+    // We are starting load as early as possible. We are counting
+    // on Meteor to avoid problems if this happens to get fired
+    // off more than once in concurrent mode.
+    if (!status) {
+      init()
     }
 
+    const [pastDelay, setPastDelay] = useState(delay === 0)
+    const [timedOut, setTimedOut] = useState(false)
+    const [, forceUpdate] = useReducer(fur, 0)
+
+    const wasLoading = status.loading
     useEffect(() => {
-      if (!status.isLoading) {
+      // If status.loading is false, then we either have an error
+      // state, or have loaded successfully. In either case, we
+      // don't need to set up any timeouts, or watch for updates.
+      if (!status.loading) {
+        // It's possible loading completed between render and commit.
+        if (wasLoading) {
+          forceUpdate()
+        }
         return
       }
 
-      if (typeof delay === 'number') {
-        if (delay === 0) {
+      // If we got this far, we need to set up the two timeouts
+      let tidDelay
+      let tidTimeout
+      const _clearTimeouts = () => {
+        if (tidDelay) clearTimeout(tidDelay)
+        if (tidTimeout) clearTimeout(tidTimeout)
+      }
+
+      if (typeof delay === 'number' && delay > 0) {
+        tidDelay = setTimeout(() => {
           setPastDelay(true)
-        } else {
-          refs._delay = setTimeout(() => {
-            setPastDelay(true)
-          }, delay)
-        }
+        }, delay)
       }
 
       if (typeof timeout === 'number') {
-        refs._timeout = setTimeout(() => {
+        tidTimeout = setTimeout(() => {
           setTimedOut(true)
         }, timeout)
       }
 
-      const update = () => {
-        setStatus({
-          error: res.error,
-          loaded: res.loaded,
-          loading: res.loading
-        })
+      // Use to avoid updating state after unmount.
+      let mounted = true
 
+      const update = () => {
         _clearTimeouts()
+        if (mounted) {
+          forceUpdate()
+        }
       }
 
-      res.promise
+      status.promise
         .then(() => {
           update()
         })
@@ -119,14 +130,15 @@ export const Loadable = ({ render = resolveRender, meteor, loader, loading, dela
         })
 
       return () => {
+        mounted = false
         _clearTimeouts()
       }
     }, [])
 
     // render
-    if (status.isLoading || status.error) {
+    if (status.loading || status.error) {
       return React.createElement(loading, {
-        isLoading: status.isLoading,
+        isLoading: status.loading,
         pastDelay: pastDelay,
         timedOut: timedOut,
         error: status.error
