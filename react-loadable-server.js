@@ -97,6 +97,10 @@ export const Loadable = (options) => {
     }
   }
 
+  Loadable.preload = () => {
+    return init()
+  }
+
   return Loadable
 }
 

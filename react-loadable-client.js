@@ -138,6 +138,10 @@ export const Loadable = ({ render = resolveRender, webpack, loader, loading, del
     }
   }
 
+  Loadable.preload = () => {
+    return init()
+  }
+
   return Loadable
 }
 
