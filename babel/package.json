@@ -1,0 +1,25 @@
+{
+  "name": "npdev-react-loadable-babel",
+  "version": "1.0.0",
+  "description": "The babel plugin for use with `npdev:react-loadable` in Meteor projects.",
+  "main": "babel.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CaptainN/npdev-react-loadable.git"
+  },
+  "keywords": [
+    "react",
+    "loadable",
+    "code splitting",
+    "dynamic imports"
+  ],
+  "author": "James Kyle & Kevin Newman",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/CaptainN/npdev-react-loadable/issues"
+  },
+  "homepage": "https://github.com/CaptainN/npdev-react-loadable"
+}
