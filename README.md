@@ -10,6 +10,8 @@ Meteor has a few different requirements for making this all work, and some incom
 meteor add npdev:react-loadable
 ```
 
+> NOTE: `npdev:react-loadable` is currently at alpha release level. It should work, but Loadable.Map is still missing, and tests have not yet been ported.
+
 ## Example
 
 ```js
