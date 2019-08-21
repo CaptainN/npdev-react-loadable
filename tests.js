@@ -1,14 +1,13 @@
 /* global Tinytest */
-import path from 'path'
 import React from 'react'
 import { create, act } from 'react-test-renderer'
 import snapshots from './tests.snap.js'
 import prettyFormat from 'pretty-format'
 
-const pretty = (component) => "\n" + prettyFormat(component.toJSON(), {
+const pretty = (component) => '\n' + prettyFormat(component.toJSON(), {
   plugins: [prettyFormat.plugins.ReactTestComponent],
   printFunctionName: false
-}) + "\n"
+}) + '\n'
 
 function waitFor (delay) {
   return new Promise(resolve => {
@@ -32,7 +31,7 @@ function MyLoadingComponent (props) {
   return <div>MyLoadingComponent {JSON.stringify(props)}</div>
 }
 
-function MyComponent(props) {
+function MyComponent (props) {
   return <div>MyComponent {JSON.stringify(props)}</div>
 }
 
@@ -76,7 +75,7 @@ Tinytest.addAsync('delay and timeout', async (test) => {
     loader: createLoader(300, () => MyComponent),
     loading: MyLoadingComponent,
     delay: 100,
-    timeout: 200,
+    timeout: 200
   })
 
   let component1
@@ -96,7 +95,7 @@ Tinytest.addAsync('delay and timeout', async (test) => {
 Tinytest.addAsync('loading error', async (test) => {
   import { Loadable } from './react-loadable-client'
 
-  let LoadableMyComponent = Loadable({
+  const LoadableMyComponent = Loadable({
     loader: createLoader(400, null, new Error('test error')),
     loading: MyLoadingComponent
   })
@@ -176,8 +175,8 @@ Tinytest.addAsync('render', async (test) => {
   const LoadableMyComponent = Loadable({
     loader: createLoader(400, () => ({ MyComponent })),
     loading: MyLoadingComponent,
-    render(loaded, props) {
-      return <loaded.MyComponent {...props}/>
+    render (loaded, props) {
+      return <loaded.MyComponent {...props} />
     }
   })
   let component

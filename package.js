@@ -15,6 +15,6 @@ Package.onUse(function (api) {
 })
 
 Package.onTest(function (api) {
-  api.use(['ecmascript', 'tinytest']);
-  api.mainModule('tests.js');
-});
+  api.use(['ecmascript', 'tinytest'])
+  api.mainModule('tests.js')
+})
