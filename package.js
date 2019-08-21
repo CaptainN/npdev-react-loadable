@@ -13,3 +13,8 @@ Package.onUse(function (api) {
   api.mainModule('react-loadable-client.js', ['client'], { lazy: true })
   api.mainModule('react-loadable-server.js', ['server'], { lazy: true })
 })
+
+Package.onTest(function (api) {
+  api.use(['ecmascript', 'tinytest']);
+  api.mainModule('tests.js');
+});

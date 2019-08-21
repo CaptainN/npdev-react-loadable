@@ -1,280 +1,324 @@
-'use strict';
+/* global Tinytest */
+import path from 'path'
+import React from 'react'
+import { create, act } from 'react-test-renderer'
+import snapshots from './tests.snap.js'
+import prettyFormat from 'pretty-format'
 
-const path = require('path');
-const React = require('react');
-const renderer = require('react-test-renderer');
-const Loadable = require('../src');
+const pretty = (component) => "\n" + prettyFormat(component.toJSON(), {
+  plugins: [prettyFormat.plugins.ReactTestComponent],
+  printFunctionName: false
+}) + "\n"
 
-function waitFor(delay) {
+function waitFor (delay) {
   return new Promise(resolve => {
-    setTimeout(resolve, delay);
-  });
+    setTimeout(resolve, delay)
+  })
 }
 
-function createLoader(delay, loader, error) {
+function createLoader (delay, loader, error) {
   return () => {
     return waitFor(delay).then(() => {
       if (loader) {
-        return loader();
+        return loader()
       } else {
-        throw error;
+        throw error
       }
-    });
-  };
+    })
+  }
 }
 
-function MyLoadingComponent(props) {
-  return <div>MyLoadingComponent {JSON.stringify(props)}</div>;
+function MyLoadingComponent (props) {
+  return <div>MyLoadingComponent {JSON.stringify(props)}</div>
 }
 
 function MyComponent(props) {
-  return <div>MyComponent {JSON.stringify(props)}</div>;
+  return <div>MyComponent {JSON.stringify(props)}</div>
 }
 
-afterEach(async () => {
-  try {
-    await Loadable.preloadAll();
-  } catch (err) {}
-});
+// afterEach(async () => {
+//   try {
+//     await Loadable.preloadAll()
+//   } catch (err) {}
+// })
 
-test('loading success', async () => {
-  let LoadableMyComponent = Loadable({
+Tinytest.addAsync('loading success', async (test) => {
+  import { Loadable } from './react-loadable-client'
+
+  const LoadableMyComponent = Loadable({
     loader: createLoader(400, () => MyComponent),
     loading: MyLoadingComponent
-  });
+  })
 
-  let component1 = renderer.create(<LoadableMyComponent prop="foo" />);
+  let component1
+  act(() => {
+    component1 = create(<LoadableMyComponent prop="foo" />)
+  })
 
-  expect(component1.toJSON()).toMatchSnapshot(); // initial
-  await waitFor(200);
-  expect(component1.toJSON()).toMatchSnapshot(); // loading
-  await waitFor(200);
-  expect(component1.toJSON()).toMatchSnapshot(); // loaded
+  test.equal(pretty(component1), snapshots['loading success 1']) // initial
+  await waitFor(200)
+  test.equal(pretty(component1), snapshots['loading success 2']) // loading
+  await waitFor(200)
+  test.equal(pretty(component1), snapshots['loading success 3']) // loaded
 
-  let component2 = renderer.create(<LoadableMyComponent prop="bar" />);
+  let component2
+  act(() => {
+    component2 = create(<LoadableMyComponent prop="bar" />)
+  })
 
-  expect(component2.toJSON()).toMatchSnapshot(); // reload
-});
+  test.equal(pretty(component2), snapshots['loading success 4']) // reload
+})
 
-test('delay and timeout', async () => {
-  let LoadableMyComponent = Loadable({
+Tinytest.addAsync('delay and timeout', async (test) => {
+  import { Loadable } from './react-loadable-client'
+
+  const LoadableMyComponent = Loadable({
     loader: createLoader(300, () => MyComponent),
     loading: MyLoadingComponent,
     delay: 100,
     timeout: 200,
-  });
+  })
 
-  let component1 = renderer.create(<LoadableMyComponent prop="foo" />);
+  let component1
+  act(() => {
+    component1 = create(<LoadableMyComponent prop="foo" />)
+  })
 
-  expect(component1.toJSON()).toMatchSnapshot(); // initial
-  await waitFor(100);
-  expect(component1.toJSON()).toMatchSnapshot(); // loading
-  await waitFor(100);
-  expect(component1.toJSON()).toMatchSnapshot(); // timed out
-  await waitFor(100);
-  expect(component1.toJSON()).toMatchSnapshot(); // loaded
-});
+  test.equal(pretty(component1), snapshots['delay and timeout 1']) // initial
+  await waitFor(100)
+  test.equal(pretty(component1), snapshots['delay and timeout 2']) // loading
+  await waitFor(100)
+  test.equal(pretty(component1), snapshots['delay and timeout 3']) // timed out
+  await waitFor(100)
+  test.equal(pretty(component1), snapshots['delay and timeout 4']) // loaded
+})
 
-test('loading error', async () => {
+Tinytest.addAsync('loading error', async (test) => {
+  import { Loadable } from './react-loadable-client'
+
   let LoadableMyComponent = Loadable({
     loader: createLoader(400, null, new Error('test error')),
     loading: MyLoadingComponent
-  });
+  })
 
-  let component = renderer.create(<LoadableMyComponent prop="baz" />);
+  let component
+  act(() => {
+    component = create(<LoadableMyComponent prop="baz" />)
+  })
 
-  expect(component.toJSON()).toMatchSnapshot(); // initial
-  await waitFor(200);
-  expect(component.toJSON()).toMatchSnapshot(); // loading
-  await waitFor(200);
-  expect(component.toJSON()).toMatchSnapshot(); // errored
-});
+  test.equal(pretty(component), snapshots['loading error 1']) // initial
+  await waitFor(200)
+  test.equal(pretty(component), snapshots['loading error 2']) // loading
+  await waitFor(200)
+  test.equal(pretty(component), snapshots['loading error 3']) // errored
+})
 
-test('server side rendering', async () => {
-  let LoadableMyComponent = Loadable({
-    loader: createLoader(400, () => require('../__fixtures__/component')),
-    loading: MyLoadingComponent,
-  });
+// Tinytest.addAsync('server side rendering', async (test) => {
+//   import { Loadable } from './react-loadable-client'
 
-  await Loadable.preloadAll();
+//   let LoadableMyComponent = Loadable({
+//     loader: createLoader(400, () => require('../__fixtures__/component')),
+//     loading: MyLoadingComponent,
+//   })
 
-  let component = renderer.create(<LoadableMyComponent prop="baz" />);
+//   await Loadable.preloadAll()
 
-  expect(component.toJSON()).toMatchSnapshot(); // serverside
-});
+//   let component = create(<LoadableMyComponent prop="baz" />)
 
-test('server side rendering es6', async () => {
-  let LoadableMyComponent = Loadable({
-    loader: createLoader(400, () => require('../__fixtures__/component.es6')),
-    loading: MyLoadingComponent,
-  });
+//   expect(component.toJSON()).toMatchSnapshot() // serverside
+// })
 
-  await Loadable.preloadAll();
+// Tinytest.addAsync('server side rendering es6', async (test) => {
+//   import { Loadable } from './react-loadable-client'
 
-  let component = renderer.create(<LoadableMyComponent prop="baz" />);
+//   let LoadableMyComponent = Loadable({
+//     loader: createLoader(400, () => require('../__fixtures__/component.es6')),
+//     loading: MyLoadingComponent,
+//   })
 
-  expect(component.toJSON()).toMatchSnapshot(); // serverside
-});
+//   await Loadable.preloadAll()
 
-test('preload', async () => {
-  let LoadableMyComponent = Loadable({
+//   let component = create(<LoadableMyComponent prop="baz" />)
+
+//   expect(component.toJSON()).toMatchSnapshot() // serverside
+// })
+
+Tinytest.addAsync('preload', async (test) => {
+  import { Loadable } from './react-loadable-client'
+
+  const LoadableMyComponent = Loadable({
     loader: createLoader(400, () => MyComponent),
     loading: MyLoadingComponent
-  });
+  })
 
-  let promise = LoadableMyComponent.preload();
-  await waitFor(200);
+  const promise = LoadableMyComponent.preload()
+  await waitFor(200)
 
-  let component1 = renderer.create(<LoadableMyComponent prop="baz" />);
+  let component1
+  act(() => {
+    component1 = create(<LoadableMyComponent prop="baz" />)
+  })
 
-  expect(component1.toJSON()).toMatchSnapshot(); // still loading...
-  await promise;
-  expect(component1.toJSON()).toMatchSnapshot(); // success
+  test.equal(pretty(component1), snapshots['preload 1']) // still loading...
+  await promise
+  test.equal(pretty(component1), snapshots['preload 2']) // success
 
-  let component2 = renderer.create(<LoadableMyComponent prop="baz" />);
-  expect(component2.toJSON()).toMatchSnapshot(); // success
-});
+  let component2
+  act(() => {
+    component2 = create(<LoadableMyComponent prop="baz" />)
+  })
+  test.equal(pretty(component2), snapshots['preload 3']) // success
+})
 
-test('render', async () => {
-  let LoadableMyComponent = Loadable({
+Tinytest.addAsync('render', async (test) => {
+  import { Loadable } from './react-loadable-client'
+
+  const LoadableMyComponent = Loadable({
     loader: createLoader(400, () => ({ MyComponent })),
     loading: MyLoadingComponent,
     render(loaded, props) {
-      return <loaded.MyComponent {...props}/>;
+      return <loaded.MyComponent {...props}/>
     }
-  });
-  let component = renderer.create(<LoadableMyComponent prop="baz" />);
-  expect(component.toJSON()).toMatchSnapshot(); // initial
-  await waitFor(200);
-  expect(component.toJSON()).toMatchSnapshot(); // loading
-  await waitFor(200);
-  expect(component.toJSON()).toMatchSnapshot(); // success
-});
+  })
+  let component
+  act(() => {
+    component = create(<LoadableMyComponent prop="baz" />)
+  })
+  test.equal(pretty(component), snapshots['render 1']) // initial
+  await waitFor(200)
+  test.equal(pretty(component), snapshots['render 2']) // loading
+  await waitFor(200)
+  test.equal(pretty(component), snapshots['render 3']) // success
+})
 
-test('loadable map success', async () => {
-  let LoadableMyComponent = Loadable.Map({
-    loader: {
-      a: createLoader(200, () => ({ MyComponent })),
-      b: createLoader(400, () => ({ MyComponent })),
-    },
-    loading: MyLoadingComponent,
-    render(loaded, props) {
-      return (
-        <div>
-          <loaded.a.MyComponent {...props}/>
-          <loaded.b.MyComponent {...props}/>
-        </div>
-      );
-    }
-  });
+// Tinytest.addAsync('loadable map success', async (test) => {
+//   import { Loadable } from './react-loadable-client'
 
-  let component = renderer.create(<LoadableMyComponent prop="baz" />);
-  expect(component.toJSON()).toMatchSnapshot(); // initial
-  await waitFor(200);
-  expect(component.toJSON()).toMatchSnapshot(); // loading
-  await waitFor(200);
-  expect(component.toJSON()).toMatchSnapshot(); // success
-});
+//   let LoadableMyComponent = Loadable.Map({
+//     loader: {
+//       a: createLoader(200, () => ({ MyComponent })),
+//       b: createLoader(400, () => ({ MyComponent })),
+//     },
+//     loading: MyLoadingComponent,
+//     render(loaded, props) {
+//       return (
+//         <div>
+//           <loaded.a.MyComponent {...props}/>
+//           <loaded.b.MyComponent {...props}/>
+//         </div>
+//       )
+//     }
+//   })
 
-test('loadable map error', async () => {
-  let LoadableMyComponent = Loadable.Map({
-    loader: {
-      a: createLoader(200, () => ({ MyComponent })),
-      b: createLoader(400, null, new Error('test error')),
-    },
-    loading: MyLoadingComponent,
-    render(loaded, props) {
-      return (
-        <div>
-          <loaded.a.MyComponent {...props}/>
-          <loaded.b.MyComponent {...props}/>
-        </div>
-      );
-    }
-  });
+//   let component = create(<LoadableMyComponent prop="baz" />)
+//   expect(component.toJSON()).toMatchSnapshot() // initial
+//   await waitFor(200)
+//   expect(component.toJSON()).toMatchSnapshot() // loading
+//   await waitFor(200)
+//   expect(component.toJSON()).toMatchSnapshot() // success
+// })
 
-  let component = renderer.create(<LoadableMyComponent prop="baz" />);
-  expect(component.toJSON()).toMatchSnapshot(); // initial
-  await waitFor(200);
-  expect(component.toJSON()).toMatchSnapshot(); // loading
-  await waitFor(200);
-  expect(component.toJSON()).toMatchSnapshot(); // success
-});
+// Tinytest.addAsync('loadable map error', async (test) => {
+//   import { Loadable } from './react-loadable-client'
 
-describe('preloadReady', () => {
-  beforeEach(() => {
-    global.__webpack_modules__ = { 1: true, 2: true };
-  });
+//   let LoadableMyComponent = Loadable.Map({
+//     loader: {
+//       a: createLoader(200, () => ({ MyComponent })),
+//       b: createLoader(400, null, new Error('test error')),
+//     },
+//     loading: MyLoadingComponent,
+//     render(loaded, props) {
+//       return (
+//         <div>
+//           <loaded.a.MyComponent {...props}/>
+//           <loaded.b.MyComponent {...props}/>
+//         </div>
+//       )
+//     }
+//   })
 
-  afterEach(() => {
-    delete global.__webpack_modules__;
-  });
+//   let component = create(<LoadableMyComponent prop="baz" />)
+//   expect(component.toJSON()).toMatchSnapshot() // initial
+//   await waitFor(200)
+//   expect(component.toJSON()).toMatchSnapshot() // loading
+//   await waitFor(200)
+//   expect(component.toJSON()).toMatchSnapshot() // success
+// })
 
-  test('undefined', async () => {
-    let LoadableMyComponent = Loadable({
-      loader: createLoader(200, () => MyComponent),
-      loading: MyLoadingComponent,
-    });
+// describe('preloadReady', () => {
+//   beforeEach(() => {
+//     global.__webpack_modules__ = { 1: true, 2: true }
+//   })
 
-    await Loadable.preloadReady();
+//   afterEach(() => {
+//     delete global.__webpack_modules__
+//   })
 
-    let component = renderer.create(<LoadableMyComponent prop="baz" />);
+//   test('undefined', async () => {
+//     let LoadableMyComponent = Loadable({
+//       loader: createLoader(200, () => MyComponent),
+//       loading: MyLoadingComponent,
+//     })
 
-    expect(component.toJSON()).toMatchSnapshot();
-  });
+//     await Loadable.preloadReady()
 
-  test('one', async () => {
-    let LoadableMyComponent = Loadable({
-      loader: createLoader(200, () => MyComponent),
-      loading: MyLoadingComponent,
-      webpack: () => [1],
-    });
+//     let component = create(<LoadableMyComponent prop="baz" />)
 
-    await Loadable.preloadReady();
+//     expect(component.toJSON()).toMatchSnapshot()
+//   })
 
-    let component = renderer.create(<LoadableMyComponent prop="baz" />);
+//   test('one', async () => {
+//     let LoadableMyComponent = Loadable({
+//       loader: createLoader(200, () => MyComponent),
+//       loading: MyLoadingComponent,
+//       webpack: () => [1],
+//     })
 
-    expect(component.toJSON()).toMatchSnapshot();
-  });
+//     await Loadable.preloadReady()
 
-  test('many', async () => {
-    let LoadableMyComponent = Loadable({
-      loader: createLoader(200, () => MyComponent),
-      loading: MyLoadingComponent,
-      webpack: () => [1, 2],
-    });
+//     let component = create(<LoadableMyComponent prop="baz" />)
 
-    await Loadable.preloadReady();
+//     expect(component.toJSON()).toMatchSnapshot()
+//   })
 
-    let component = renderer.create(<LoadableMyComponent prop="baz" />);
+//   test('many', async () => {
+//     let LoadableMyComponent = Loadable({
+//       loader: createLoader(200, () => MyComponent),
+//       loading: MyLoadingComponent,
+//       webpack: () => [1, 2],
+//     })
 
-    expect(component.toJSON()).toMatchSnapshot();
-  });
+//     await Loadable.preloadReady()
 
-  test('missing', async () => {
-    let LoadableMyComponent = Loadable({
-      loader: createLoader(200, () => MyComponent),
-      loading: MyLoadingComponent,
-      webpack: () => [1, 42],
-    });
+//     let component = create(<LoadableMyComponent prop="baz" />)
 
-    await Loadable.preloadReady();
+//     expect(component.toJSON()).toMatchSnapshot()
+//   })
 
-    let component = renderer.create(<LoadableMyComponent prop="baz" />);
+//   test('missing', async () => {
+//     let LoadableMyComponent = Loadable({
+//       loader: createLoader(200, () => MyComponent),
+//       loading: MyLoadingComponent,
+//       webpack: () => [1, 42],
+//     })
 
-    expect(component.toJSON()).toMatchSnapshot();
-  });
+//     await Loadable.preloadReady()
 
-  test('delay with 0', () => {
-    let LoadableMyComponent = Loadable({
-      loader: createLoader(300, () => MyComponent),
-      loading: MyLoadingComponent,
-      delay: 0,
-      timeout: 200,
-    });
-  
-    let loadingComponent = renderer.create(<LoadableMyComponent prop="foo" />);
-  
-    expect(loadingComponent.toJSON()).toMatchSnapshot(); // loading
-  });
-});
+//     let component = create(<LoadableMyComponent prop="baz" />)
+
+//     expect(component.toJSON()).toMatchSnapshot()
+//   })
+
+//   test('delay with 0', () => {
+//     let LoadableMyComponent = Loadable({
+//       loader: createLoader(300, () => MyComponent),
+//       loading: MyLoadingComponent,
+//       delay: 0,
+//       timeout: 200,
+//     })
+
+//     let loadingComponent = create(<LoadableMyComponent prop="foo" />)
+
+//     expect(loadingComponent.toJSON()).toMatchSnapshot() // loading
+//   })
+// })

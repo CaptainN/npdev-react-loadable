@@ -1,5 +1,11 @@
 {
   "name": "npdev-react-loadable",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CaptainN/npdev-react-loadable.git"
+  },
+  "author": "James Kyle & Kevin Newman",
+  "license": "MIT",
   "devDependencies": {
     "babel-eslint": "^10.0.2",
     "eslint": "^6.0.1",
@@ -12,7 +18,13 @@
     "eslint-plugin-promise": "^4.2.1",
     "eslint-plugin-react": "^7.14.2",
     "eslint-plugin-react-hooks": "^1.6.1",
-    "eslint-plugin-standard": "^4.0.0"
+    "eslint-plugin-standard": "^4.0.0",
+    "npdev-react-loadable-babel": "file:babel",
+    "path": "^0.12.7",
+    "pretty-format": "^24.9.0",
+    "react": "^16.9.0",
+    "react-dom": "^16.9.0",
+    "react-test-renderer": "^16.9.0"
   },
   "browserslist": [
     "> 1%",
