@@ -1,40 +1,9 @@
 import { EJSON } from 'meteor/ejson'
 import React, { useState, useEffect, useReducer } from 'react'
+import { load, resolveRender, flushInitializers } from './react-loadable-both'
 
 const INITIALIZERS = []
 const INITIALIZERS_BY_MODULE = {}
-
-function load (loader) {
-  const promise = loader()
-
-  const state = {
-    loading: true,
-    loaded: null,
-    error: null
-  }
-
-  state.promise = promise
-    .then(loaded => {
-      state.loading = false
-      state.loaded = loaded
-      return loaded
-    })
-    .catch(err => {
-      state.loading = false
-      state.error = err
-      throw err
-    })
-
-  return state
-}
-
-function resolve (obj) {
-  return obj && obj.__esModule ? obj.default : obj
-}
-
-function resolveRender (loaded, props) {
-  return React.createElement(resolve(loaded), props)
-}
 
 // Used to create a forceUpdate from useReducer. Forces update by
 // incrementing a number whenever the dispatch method is invoked.
@@ -155,21 +124,6 @@ export const Loadable = ({ render = resolveRender, meteor, loader, loading, dela
   }
 
   return Loadable
-}
-
-function flushInitializers (initializers) {
-  const promises = []
-
-  while (initializers.length) {
-    const init = initializers.pop()
-    promises.push(init())
-  }
-
-  return Promise.all(promises).then(() => {
-    if (initializers.length) {
-      return flushInitializers(initializers)
-    }
-  })
 }
 
 const preload = (preloadables) => {
