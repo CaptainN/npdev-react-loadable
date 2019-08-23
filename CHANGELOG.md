@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0-beta.0] - 2019-8-23
+- Restored LoadableMap (with Loadable.Map alias) and tests.
+
 ## [1.0.0-alpha.1] - 2019-8-21
 - Moved common code (server/client) into a "both" file.
 - Ported some tests from the old npm version to Tinytest.
