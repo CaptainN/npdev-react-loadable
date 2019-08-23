@@ -190,59 +190,65 @@ Tinytest.addAsync('render', async (test) => {
   test.equal(pretty(component), snapshots['render 3']) // success
 })
 
-// Tinytest.addAsync('loadable map success', async (test) => {
-//   import { Loadable } from './react-loadable-client'
+Tinytest.addAsync('loadable map success', async (test) => {
+  import { Loadable } from './react-loadable-client'
 
-//   let LoadableMyComponent = Loadable.Map({
-//     loader: {
-//       a: createLoader(200, () => ({ MyComponent })),
-//       b: createLoader(400, () => ({ MyComponent })),
-//     },
-//     loading: MyLoadingComponent,
-//     render(loaded, props) {
-//       return (
-//         <div>
-//           <loaded.a.MyComponent {...props}/>
-//           <loaded.b.MyComponent {...props}/>
-//         </div>
-//       )
-//     }
-//   })
+  const LoadableMyComponent = Loadable.Map({
+    loader: {
+      a: createLoader(200, () => ({ MyComponent })),
+      b: createLoader(400, () => ({ MyComponent }))
+    },
+    loading: MyLoadingComponent,
+    render (loaded, props) {
+      return (
+        <div>
+          <loaded.a.MyComponent {...props} />
+          <loaded.b.MyComponent {...props} />
+        </div>
+      )
+    }
+  })
 
-//   let component = create(<LoadableMyComponent prop="baz" />)
-//   expect(component.toJSON()).toMatchSnapshot() // initial
-//   await waitFor(200)
-//   expect(component.toJSON()).toMatchSnapshot() // loading
-//   await waitFor(200)
-//   expect(component.toJSON()).toMatchSnapshot() // success
-// })
+  let component
+  act(() => {
+    component = create(<LoadableMyComponent prop="baz" />)
+  })
+  test.equal(pretty(component), snapshots['loadable map success 1']) // initial
+  await waitFor(200)
+  test.equal(pretty(component), snapshots['loadable map success 2']) // loading
+  await waitFor(200)
+  test.equal(pretty(component), snapshots['loadable map success 3']) // success
+})
 
-// Tinytest.addAsync('loadable map error', async (test) => {
-//   import { Loadable } from './react-loadable-client'
+Tinytest.addAsync('loadable map error', async (test) => {
+  import { Loadable } from './react-loadable-client'
 
-//   let LoadableMyComponent = Loadable.Map({
-//     loader: {
-//       a: createLoader(200, () => ({ MyComponent })),
-//       b: createLoader(400, null, new Error('test error')),
-//     },
-//     loading: MyLoadingComponent,
-//     render(loaded, props) {
-//       return (
-//         <div>
-//           <loaded.a.MyComponent {...props}/>
-//           <loaded.b.MyComponent {...props}/>
-//         </div>
-//       )
-//     }
-//   })
+  const LoadableMyComponent = Loadable.Map({
+    loader: {
+      a: createLoader(200, () => ({ MyComponent })),
+      b: createLoader(400, null, new Error('test error'))
+    },
+    loading: MyLoadingComponent,
+    render (loaded, props) {
+      return (
+        <div>
+          <loaded.a.MyComponent {...props} />
+          <loaded.b.MyComponent {...props} />
+        </div>
+      )
+    }
+  })
 
-//   let component = create(<LoadableMyComponent prop="baz" />)
-//   expect(component.toJSON()).toMatchSnapshot() // initial
-//   await waitFor(200)
-//   expect(component.toJSON()).toMatchSnapshot() // loading
-//   await waitFor(200)
-//   expect(component.toJSON()).toMatchSnapshot() // success
-// })
+  let component
+  act(() => {
+    component = create(<LoadableMyComponent prop="baz" />)
+  })
+  test.equal(pretty(component), snapshots['loadable map error 1']) // initial
+  await waitFor(200)
+  test.equal(pretty(component), snapshots['loadable map error 2']) // loading
+  await waitFor(200)
+  test.equal(pretty(component), snapshots['loadable map error 3']) // success
+})
 
 // describe('preloadReady', () => {
 //   beforeEach(() => {
