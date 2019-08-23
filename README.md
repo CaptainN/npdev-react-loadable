@@ -10,7 +10,7 @@ Meteor has a few different requirements for making this all work, and some incom
 meteor add npdev:react-loadable
 ```
 
-> NOTE: `npdev:react-loadable` is currently at alpha release level. It should work, but Loadable.Map is still missing, and tests have not yet been ported.
+> NOTE: `npdev:react-loadable` is currently at beta release level. Everything has been ported, and it just needs some more testing.
 
 ## Example
 
@@ -203,7 +203,7 @@ What about when `import()` fails? What about server-side rendering?
 Instead you can use `Loadable` to abstract away the problem.
 
 ```js
-import { Loadable}  from 'meteor/npdev:react-loadable';
+import { Loadable }  from 'meteor/npdev:react-loadable';
 
 const LoadableBar = Loadable({
   loader: () => import('./components/Bar'),
@@ -359,10 +359,10 @@ returns a promise and [you're able to render something](#customizing-rendering).
 But writing it out can be a bit annoying.
 
 To make it easier to load multiple resources in parallel, you can use
-[`Loadable.Map`](#loadablemap).
+[`LoadableMap`](#loadablemap).
 
 ```js
-Loadable.Map({
+LoadableMap({
   loader: {
     Bar: () => import('./Bar'),
     i18n: () => fetch('./i18n/bar.json').then(res => res.json()),
@@ -375,7 +375,7 @@ Loadable.Map({
 });
 ```
 
-When using `Loadable.Map` the [`render()` method](#optsrender) is required. It
+When using `LoadableMap` the [`render()` method](#optsrender) is required. It
 will be passed a `loaded` param which will be an object matching the shape of
 your `loader`.
 
@@ -482,7 +482,7 @@ are rendering.
 #### Declaring which modules are being loaded
 
 There is one option in [`Loadable`](#loadable) and
-[`Loadable.Map`](#loadablemap) which is used to tell us which modules our
+[`LoadableMap`](#loadablemap) which is used to tell us which modules our
 component is trying to load: [`opts.meteor`](#optsmeteor).
 
 ```js
@@ -593,15 +593,15 @@ const LoadableComponent = Loadable({
 
 This returns a [LoadableComponent](#loadablecomponent).
 
-### `Loadable.Map`
+### `LoadableMap`
 
 A higher-order component that allows you to load multiple resources in parallel.
 
-Loadable.Map's [`opts.loader`](#optsloader) accepts an object of functions, and
+LoadableMap's [`opts.loader`](#optsloader) accepts an object of functions, and
 needs a [`opts.render`](#optsrender) method.
 
 ```js
-Loadable.Map({
+LoadableMap({
   loader: {
     Bar: () => import('./Bar'),
     i18n: () => fetch('./i18n/bar.json').then(res => res.json()),
@@ -614,10 +614,11 @@ Loadable.Map({
 });
 ```
 
-When using `Loadable.Map` the `render()` method's `loaded` param will be an
-object with the same shape as your `loader`.
+When using `LoadableMap` the `render()` method's `loaded` param will be an
+object with the same shape as your `loader`. Note: A reference to `LoadableMap`
+is available on `Loadable.Map` for backward compatibility and easy porting.
 
-### `Loadable` and `Loadable.Map` Options
+### `Loadable` and `LoadableMap` Options
 
 #### `opts.loader`
 
@@ -629,11 +630,11 @@ Loadable({
 });
 ```
 
-When using with [`Loadable.Map`](#loadablemap) this accepts an object of these
+When using with [`LoadableMap`](#loadablemap) this accepts an object of these
 types of functions.
 
 ```js
-Loadable.Map({
+LoadableMap({
   loader: {
     Bar: () => import('./Bar'),
     i18n: () => fetch('./i18n/bar.json').then(res => res.json()),
@@ -641,7 +642,7 @@ Loadable.Map({
 });
 ```
 
-When using with `Loadable.Map` you'll also need to pass a
+When using with `LoadableMap` you'll also need to pass a
 [`opts.render`](#optsrender) function.
 
 #### `opts.loading`
@@ -724,7 +725,7 @@ This option can be automated with the [Babel Plugin](#babel-plugin).
 
 ### `LoadableComponent`
 
-This is the component returned by `Loadable` and `Loadable.Map`.
+This is the component returned by `Loadable` and `LoadableMap`.
 
 ```js
 const LoadableComponent = Loadable({
@@ -943,13 +944,13 @@ $ meteor npm i -D npdev-react-loadable-babel
 **Input**
 
 ```js
-import Loadable from 'react-loadable';
+import { Loadable, LoadableMap } from 'meteor/npdev:react-loadable';
 
 const LoadableMyComponent = Loadable({
   loader: () => import('./MyComponent'),
 });
 
-const LoadableComponents = Loadable.Map({
+const LoadableComponents = LoadableMap({
   loader: {
     One: () => import('./One'),
     Two: () => import('./Two'),
@@ -960,7 +961,7 @@ const LoadableComponents = Loadable.Map({
 **Output**
 
 ```js
-import Loadable from 'react-loadable';
+import { Loadable, LoadableMap } from 'meteor/npdev:react-loadable';
 import path from 'path';
 
 const LoadableMyComponent = Loadable({
@@ -968,7 +969,7 @@ const LoadableMyComponent = Loadable({
   meteor: () => [require.resolve('./MyComponent')]
 });
 
-const LoadableComponents = Loadable.Map({
+const LoadableComponents = LoadableMap({
   loader: {
     One: () => import('./One'),
     Two: () => import('./Two'),
@@ -986,7 +987,7 @@ Specifying the same `loading` component or `delay` every time you use
 own Higher-Order Component (HOC) to set default options.
 
 ```js
-import Loadable from 'react-loadable';
+import { Loadable } from 'meteor/npdev:react-loadable';
 import Loading from './my-loading-component';
 
 export default function MyLoadable(opts) {
@@ -1014,7 +1015,7 @@ export default class App extends React.Component {
 }
 ```
 
-Unfortunately at the moment using wrapped Loadable breaks [react-loadable/babel](#babel-plugin) so in such case you have to add required properties (`modules`, `meteor`) manually.
+Unfortunately at the moment using wrapped Loadable breaks [react-loadable/babel](#babel-plugin) so in such case you have to add required property (`meteor`) manually.
 
 ```js
 import MyLoadable from './MyLoadable';
