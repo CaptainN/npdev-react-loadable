@@ -1,6 +1,7 @@
+/* global Meteor */
 import { EJSON } from 'meteor/ejson'
 import React, { useState, useEffect, useReducer } from 'react'
-import { load, resolveRender, flushInitializers } from './react-loadable-both'
+import { load, loadMap, resolveRender, flushInitializers } from './react-loadable-both'
 
 const INITIALIZERS = []
 const INITIALIZERS_BY_MODULE = {}
@@ -12,7 +13,7 @@ const fur = x => x + 1
 /**
  * Creates a "Loadable" component at startup, which will persist for the length of the program.
  */
-export const Loadable = ({ render = resolveRender, meteor, loader, loading, delay = 200, timeout = null }) => {
+const createLoadable = (load) => ({ render = resolveRender, meteor, loader, loading, delay = 200, timeout = null }) => {
   if (!loading) {
     throw new Error('react-loadable requires a `loading` component')
   }
@@ -125,6 +126,19 @@ export const Loadable = ({ render = resolveRender, meteor, loader, loading, dela
 
   return Loadable
 }
+
+export const Loadable = createLoadable(load)
+export const LoadableMap = Meteor.isDevelopment
+  ? (((LoadableMap) => (opts) => {
+    if (typeof opts.render !== 'function') {
+      throw new Error('LoadableMap requires a `render(loaded, props)` function')
+    }
+    return LoadableMap(opts)
+  })(createLoadable(loadMap)))
+  : createLoadable(loadMap)
+
+// For backward compat and easy porting
+Loadable.Map = LoadableMap
 
 const preload = (preloadables) => {
   const initializers = preloadables.map(preloadable => {

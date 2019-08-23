@@ -24,6 +24,53 @@ export function load (loader) {
   return state
 }
 
+export function loadMap (obj) {
+  let state = {
+    loading: false,
+    loaded: {},
+    error: null
+  }
+
+  let promises = []
+
+  try {
+    Object.keys(obj).forEach(key => {
+      let result = load(obj[key])
+
+      if (!result.loading) {
+        state.loaded[key] = result.loaded
+        state.error = result.error
+      } else {
+        state.loading = true
+      }
+
+      promises.push(result.promise)
+
+      result.promise
+        .then(res => {
+          state.loaded[key] = res
+        })
+        .catch(err => {
+          state.error = err
+        })
+    })
+  } catch (err) {
+    state.error = err
+  }
+
+  state.promise = Promise.all(promises)
+    .then(res => {
+      state.loading = false
+      return res
+    })
+    .catch(err => {
+      state.loading = false
+      throw err
+    })
+
+  return state
+}
+
 function resolve (obj) {
   return obj && obj.__esModule ? obj.default : obj
 }
