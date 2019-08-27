@@ -25,17 +25,17 @@ export function load (loader) {
 }
 
 export function loadMap (obj) {
-  let state = {
+  const state = {
     loading: false,
     loaded: {},
     error: null
   }
 
-  let promises = []
+  const promises = []
 
   try {
     Object.keys(obj).forEach(key => {
-      let result = load(obj[key])
+      const result = load(obj[key])
 
       if (!result.loading) {
         state.loaded[key] = result.loaded
