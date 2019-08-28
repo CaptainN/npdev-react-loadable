@@ -925,7 +925,7 @@ preloadLoadables().then(() => onPageLoad(sink => {
 
 ## Babel Plugin
 
-Providing [`opts.meteor`](#optsmeteor) and [`opts.modules`](#optsmodules) for
+Providing [`opts.meteor`](#optsmeteor) for
 every loadable component is a lot of manual work to remember to do.
 
 Instead you can install the babel plugin from npm, and add the
