@@ -151,6 +151,7 @@ export const preloadLoadables = (id = '__preloadables__') => {
   const preloadablesNode = document.getElementById(id)
   if (preloadablesNode) {
     const preloadables = EJSON.parse(preloadablesNode.innerText)
+    preloadablesNode.parentNode.removeChild(preloadablesNode)
     return preload(preloadables)
   } else {
     return new Promise((resolve) => { resolve() })
