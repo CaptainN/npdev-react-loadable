@@ -1,6 +1,6 @@
 /* global Meteor */
 import { EJSON } from 'meteor/ejson'
-import React, { useState, useEffect, useReducer } from 'react'
+import { useState, useEffect, useReducer, createElement } from 'react'
 import { load, loadMap, resolveRender, flushInitializers } from './react-loadable-both'
 
 const INITIALIZERS = []
@@ -107,7 +107,7 @@ const createLoadable = (load) => ({ render = resolveRender, meteor, loader, load
 
     // render
     if (status.loading || status.error) {
-      return React.createElement(loading, {
+      return createElement(loading, {
         isLoading: status.loading,
         pastDelay: pastDelay,
         timedOut: timedOut,

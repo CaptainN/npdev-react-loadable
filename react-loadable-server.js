@@ -1,6 +1,6 @@
 /* global Meteor */
 import { EJSON } from 'meteor/ejson'
-import React, { useContext, createContext } from 'react'
+import { useContext, createContext, createElement } from 'react'
 import { load, loadMap, resolveRender, flushInitializers } from './react-loadable-both'
 
 const INITIALIZERS = []
@@ -16,9 +16,7 @@ export const LoadableCaptureProvider = ({ handle, children }) => {
       `<script type="text/ejson" id="__preloadables__">${EJSON.stringify(handle.loadables)}</script>`
     )
   }
-  return <LoadableContext.Provider value={handle}>
-    {children}
-  </LoadableContext.Provider>
+  return createElement(LoadableContext.Provider, { value: handle }, children)
 }
 
 /**
@@ -54,7 +52,7 @@ const createLoadable = (load) => (options) => {
 
     // render
     if (res.loading || res.error) {
-      return React.createElement(loading, {
+      return createElement(loading, {
         isLoading: res.loading,
         pastDelay: false,
         timedOut: false,
