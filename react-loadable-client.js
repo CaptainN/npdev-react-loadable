@@ -157,3 +157,5 @@ export const preloadLoadables = (id = '__preloadables__') => {
     return new Promise((resolve) => { resolve() })
   }
 }
+
+export const preloadAllLoadables = () => flushInitializers(INITIALIZERS)

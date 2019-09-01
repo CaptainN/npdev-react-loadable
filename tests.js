@@ -1,8 +1,18 @@
-/* global Tinytest */
+/* global Meteor Tinytest */
 import React from 'react'
 import { create, act } from 'react-test-renderer'
 import snapshots from './tests.snap.js'
 import prettyFormat from 'pretty-format'
+
+class FixtureComponent extends React.Component {
+  render () {
+    return <div>fixture1</div>
+  }
+}
+const fixtureEs6 = {
+  default: () => <div>fixture2</div>,
+  __esModule: true
+}
 
 const pretty = (component) => '\n' + prettyFormat(component.toJSON(), {
   plugins: [prettyFormat.plugins.ReactTestComponent],
@@ -92,6 +102,80 @@ Tinytest.addAsync('delay and timeout', async (test) => {
   test.equal(pretty(component1), snapshots['delay and timeout 4']) // loaded
 })
 
+if (Meteor.isServer) {
+  Tinytest.addAsync('server side preload all', async (test) => {
+    import { Loadable, preloadAllLoadables } from './react-loadable-server'
+
+    const LoadableMyComponent = Loadable({
+      loader: createLoader(400, () => FixtureComponent),
+      loading: MyLoadingComponent
+    })
+
+    await preloadAllLoadables()
+
+    let component
+    act(() => {
+      component = create(<LoadableMyComponent prop="baz" />)
+    })
+
+    test.equal(pretty(component), snapshots['server side rendering 1'])
+  })
+
+  Tinytest.addAsync('server side preload all es6', async (test) => {
+    import { Loadable, preloadAllLoadables } from './react-loadable-server'
+
+    const LoadableMyComponent = Loadable({
+      loader: createLoader(400, () => fixtureEs6),
+      loading: MyLoadingComponent
+    })
+
+    await preloadAllLoadables()
+
+    let component
+    act(() => {
+      component = create(<LoadableMyComponent prop="baz" />)
+    })
+
+    test.equal(pretty(component), snapshots['server side rendering es6 1'])
+  })
+} else if (Meteor.isClient) {
+  Tinytest.addAsync('client side preload all', async (test) => {
+    import { Loadable, preloadAllLoadables } from './react-loadable-client'
+
+    const LoadableMyComponent = Loadable({
+      loader: createLoader(400, () => FixtureComponent),
+      loading: MyLoadingComponent
+    })
+
+    await preloadAllLoadables()
+
+    let component
+    act(() => {
+      component = create(<LoadableMyComponent prop="baz" />)
+    })
+
+    test.equal(pretty(component), snapshots['server side rendering 1'])
+  })
+
+  Tinytest.addAsync('client side preload all es6', async (test) => {
+    import { Loadable, preloadAllLoadables } from './react-loadable-client'
+
+    const LoadableMyComponent = Loadable({
+      loader: createLoader(400, () => fixtureEs6),
+      loading: MyLoadingComponent
+    })
+
+    await preloadAllLoadables()
+
+    let component
+    act(() => {
+      component = create(<LoadableMyComponent prop="baz" />)
+    })
+
+    test.equal(pretty(component), snapshots['server side rendering es6 1'])
+  })
+}
+
 Tinytest.addAsync('loading error', async (test) => {
   import { Loadable } from './react-loadable-client'
 
@@ -111,36 +195,6 @@ Tinytest.addAsync('loading error', async (test) => {
   await waitFor(200)
   test.equal(pretty(component), snapshots['loading error 3']) // errored
 })
-
-// Tinytest.addAsync('server side rendering', async (test) => {
-//   import { Loadable } from './react-loadable-client'
-
-//   let LoadableMyComponent = Loadable({
-//     loader: createLoader(400, () => require('../__fixtures__/component')),
-//     loading: MyLoadingComponent,
-//   })
-
-//   await Loadable.preloadAll()
-
-//   let component = create(<LoadableMyComponent prop="baz" />)
-
-//   expect(component.toJSON()).toMatchSnapshot() // serverside
-// })
-
-// Tinytest.addAsync('server side rendering es6', async (test) => {
-//   import { Loadable } from './react-loadable-client'
-
-//   let LoadableMyComponent = Loadable({
-//     loader: createLoader(400, () => require('../__fixtures__/component.es6')),
-//     loading: MyLoadingComponent,
-//   })
-
-//   await Loadable.preloadAll()
-
-//   let component = create(<LoadableMyComponent prop="baz" />)
-
-//   expect(component.toJSON()).toMatchSnapshot() // serverside
-// })
 
 Tinytest.addAsync('preload', async (test) => {
   import { Loadable } from './react-loadable-client'
