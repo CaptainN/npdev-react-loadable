@@ -1015,7 +1015,7 @@ export default class App extends React.Component {
 }
 ```
 
-Unfortunately at the moment using wrapped Loadable breaks [react-loadable/babel](#babel-plugin) so in such case you have to add required property (`meteor`) manually.
+Unfortunately at the moment using wrapped Loadable breaks [npdev-react-loadable-babel](#babel-plugin) so in such case you have to add required property (`meteor`) manually.
 
 ```js
 import MyLoadable from './MyLoadable';
