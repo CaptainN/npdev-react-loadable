@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.0.0-beta.3] - 2020-04-22
 - Remove node_modules from deployed package...
-- Also create a deploy script to prevent this from happening again.
+- Also create a publish script to prevent this from happening again.
 
 ## [1.0.0-beta.2] - 2020-04-22
 - Increment main versionsFrom constraint, and update testing packages
