@@ -7,7 +7,8 @@
   "author": "James Kyle & Kevin Newman",
   "license": "MIT",
   "scripts": {
-    "test": "meteor test-packages ./"
+    "test": "meteor test-packages ./",
+    "deploy": "rm -rf node_modules && meteor publish"
   },
   "devDependencies": {
     "babel-eslint": "^10.1.0",
