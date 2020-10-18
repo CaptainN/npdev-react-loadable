@@ -10,8 +10,6 @@ Meteor has a few different requirements for making this all work, and some incom
 meteor add npdev:react-loadable
 ```
 
-> NOTE: `npdev:react-loadable` is currently at beta release level. Everything has been ported, and it just needs some more testing.
-
 ## Example
 
 ```js

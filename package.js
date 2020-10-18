@@ -2,7 +2,7 @@
 Package.describe({
   name: 'npdev:react-loadable',
   summary: 'A React component for easy code splitting with Meteor\'s dynamic-import',
-  version: '1.0.0-beta.3',
+  version: '1.0.0',
   documentation: 'README.md',
   git: 'https://github.com/CaptainN/npdev-react-loadable'
 })
